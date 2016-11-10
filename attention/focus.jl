@@ -5,25 +5,32 @@ mview(x)=ImageView.view(x)
 #a = load(joinpath("/mnt/ai/home/dyuret/.gnome2/cheese/media/2016-11-08-135940.jpg"))
 # some images with multiple objects
 # /mnt/ai/data/ImageNet/ILSVRC2015/Data/CLS-LOC/val/ILSVRC2012_val_00026677.JPEG
-#ILSVRC2012_val_00010447.JPEG
+#img = load("/mnt/ai/data/img/ImageNet/ILSVRC2015/Data/CLS-LOC/val/ILSVRC2012_val_00010447.JPEG")
 
 immutable Model; weights; average; description; end
 const op = [1,2,1,2,1,1,2,1,1,2,1,1,2,3,3,4]
 convx(w,x)=conv4(w,x;padding=1,mode=1)
 
-function test1()
+function test1(path="/mnt/ai/data/img/ImageNet/ILSVRC2015/Data/CLS-LOC/val/ILSVRC2012_val_00010447.JPEG")
     global vgg
     isdefined(:vgg) || (vgg=loadmodel())
-    global img=load("/mnt/ai/data/ImageNet/ILSVRC2015/Data/CLS-LOC/val/ILSVRC2012_val_00007509.JPEG")
+    global img=load(path)
     mview(img)
     global out, coor
     (out,coor) = multipred(vgg,img)
 end
 
+function test2()
+    global vgg
+    isdefined(:vgg) || (vgg=loadmodel())
+    global img=rndimg()
+    mview(img)
+    global out, coor
+    (out,coor) = multipred(vgg,img)
+end    
+
 # minibatch multiple regions of the image and find the ones with lowest entropy
 function multipred(model, img; n=100)
-    gc()
-    Knet.knetgc()
     data = Array(Float32,224,224,3,n)
     coor = Any[]
     for i=1:n
@@ -46,7 +53,6 @@ function multipred(model, img; n=100)
         pr[c] = true
         println((exp(lp[c,i]), coor[i], model.description[c]))
     end
-    gc(); Knet.knetgc()
     (out, coor)
 end
 
@@ -117,7 +123,7 @@ function loadmodel(path=Knet.dir("data","imagenet-vgg-verydeep-16.mat"))
 end
 
 # pick a random image from ImageNet validation set
-function rndimg(path="/mnt/ai/data/ImageNet/ILSVRC2015/Data/CLS-LOC/val")
+function rndimg(path="/mnt/ai/data/img/ImageNet/ILSVRC2015/Data/CLS-LOC/val")
     a = readdir(path)
     i = rand(1:length(a))
     println(a[i])
