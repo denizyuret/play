@@ -1,38 +1,56 @@
-function init(w) {
+function init() {
+    // TODO: support multiple worlds.
     //console.log('init');
-    w.clock = 0;
-    w.paused = true;
-    w.raf = null;
-    w.balls = [];
-    w.addBall = addBall;
-    w.addEventListener('click', function(e) {
-	if (w.raf) {
-	    console.log('paused');
-	    cancelAnimationFrame(w.raf);
-	    w.raf = null;
-	    w.paused = true;
-	} else {
-	    console.log('unpaused');
-	    w.raf = requestAnimationFrame(draw);
-	}
+    world = document.getElementById('world');
+    world.clock = 0;
+    world.balls = [];
+    world.addBall = addBall;
+    world.paused = true;
+    world.lastEvent = 'init';
+    world.addEventListener('click',    function() {
+	world.lastEvent = 'click';
+	if (world.paused) requestAnimationFrame(redraw);
     });
-    w.addEventListener('dblclick', function(e) {
-	if (w.paused) {
-	    console.log('reversed');
-	    reverseTime(w);
-	    w.raf = requestAnimationFrame(draw);
-	}
+    world.addEventListener('dblclick', function() {
+	world.lastEvent = 'dblclick';
+	if (world.paused) requestAnimationFrame(redraw);
     });
+    requestAnimationFrame(redraw);
+}
+
+function redraw(time) {
+    //console.log("redraw:"+time);
+    if (world.paused) {
+	updateTime(world,time);
+    }
+    if (world.lastEvent === 'click') {
+	console.log('click');
+	world.paused = !world.paused;
+    }
+    if (world.lastEvent === 'dblclick') {
+	console.log('dblclick');
+	reverseTime(world);
+	world.paused = false;
+    }
+    world.lastEvent = 'redraw';
+    if (!world.paused) {
+	updateBalls(world,time);
+	drawBalls(world);
+	requestAnimationFrame(redraw);
+    }
 }
 
 function addBall(r,x,y,vx,vy) {
+    // TODO: refuse to add overlapping balls
     var b = { r:r, x:x, y:y, vx:vx, vy:vy };
-    findFirstColl(this,b);
-    this.balls.push(b);
+    findFirstColl(world,b);
+    world.balls.push(b);
+    drawBalls(world);
     //console.log('add:');console.log(b);
 }
 
 function findFirstColl(w,b) {
+    // TODO: use grid for efficiency
     b.c = 0;
     b.t = Infinity;
     wallColl(w,b);
@@ -44,6 +62,7 @@ function findFirstColl(w,b) {
 	}
     }
     b.t += w.clock;
+    if (isNaN(b.t)) error();
     //console.log("firstColl:");console.log(c);
 }
 
@@ -52,33 +71,20 @@ function wallColl(w,b) {
     if (b.vx < 0) {
 	t = -(b.x-b.r)/b.vx;
 	if (t < b.t) { b.t = t; b.c = -1; }
-    } else {
+    } else if (b.vx > 0) {
 	t = (w.width-b.x-b.r)/b.vx;
 	if (t < b.t) { b.t = t; b.c = -1; }
     }
     if (b.vy < 0) {
 	t = -(b.y-b.r)/b.vy;
 	if (t < b.t) { b.t = t; b.c = -2; }
-    } else {
+    } else if (b.vy > 0) {
 	t = (w.height-b.y-b.r)/b.vy;
 	if (t < b.t) { b.t = t; b.c = -2; }
     }
 }
 
-function draw(time) {
-    // TODO: support multiple worlds.
-    //console.log("draw:"+time);
-    if (world.paused) {
-	updateTime(world,time);
-	world.paused = false;
-    } else {
-	drawBalls(world,time);
-    }
-    world.raf = requestAnimationFrame(draw);
-}
-
-function drawBalls(w,t) {
-    advance(w,t);
+function drawBalls(w) {
     var c = w.getContext("2d");
     c.fillStyle = "#ccc";
     c.clearRect(0,0,w.width,w.height);
@@ -91,22 +97,19 @@ function drawBalls(w,t) {
     }
 }
 
-//_advance = true;
-
-function advance(w,t) {
+function updateBalls(w,t) {
     //console.log("advance:"+t);
-    //if (!_advance) return;
     while (true) {
 	var b = nextColl(w);
 	if (b.t > t) break;
 	simpleAdvance(w,b.t);
-	//_advance = false; return;
 	collide(w,b);
     }
     simpleAdvance(w,t);
 }
 
 function nextColl(w) {
+    // TODO: use priority queue for efficiency
     var tmin = Infinity;
     var imin = 0;
     for (var i=0; i<w.balls.length; i++) {
@@ -149,6 +152,7 @@ function updateTime(w,t) {
 }
 
 function reverseTime(w) {
+    console.log('reverseTime');
     for (var i = 0; i < w.balls.length; i++) {
 	b = w.balls[i];
 	b.vx = -b.vx;
@@ -171,15 +175,19 @@ function ballColl(a,b) {
     // TODO:
     var cx = b.x - a.x;   var cy = b.y - a.y;
     var vx = a.vx - b.vx; var vy = a.vy - b.vy;
-    if (cx*vx + cy*vy <= 0) return Infinity;
-    var vn = Math.sqrt(vx*vx + vy*vy);
-    var nx = vx / vn;     var ny = vy / vn;
-    var d = nx*cx + ny*cy;
-    var f = cx*cx + cy*cy - d*d;
-    var rr = a.r + b.r;   var rr2 = rr * rr;
-    if (f >= rr2) return Infinity;
-    var dx = d - Math.sqrt(rr2 - f);
-    return dx / vn;
+    var cv = cx*vx + cy*vy;
+    if (cv <= 0) return Infinity;
+    var rr = a.r + b.r;
+    if (Math.abs(vx) * a.t + rr < Math.abs(cx)) return Infinity;
+    if (Math.abs(vy) * a.t + rr < Math.abs(cy)) return Infinity;
+    var v1 = Math.sqrt(vx*vx + vy*vy);
+    var d = cv / v1; var d2 = d*d;
+    var c2 = cx*cx + cy*cy;
+    var f2 = c2 - d2;
+    var rr2 = rr * rr;
+    if (f2 >= rr2) return Infinity;
+    var dx = d - Math.sqrt(rr2 - f2);
+    return dx / v1;
 }
 
 function bounce(a,b) {
@@ -197,3 +205,24 @@ function bounce(a,b) {
     a.vx -= pmb * nx; a.vy -= pmb * ny;
     b.vx += pma * nx; b.vy += pma * ny;
 }
+
+init();    
+
+    // w.addEventListener('click', function(e) {
+    // 	if (w.raf) {
+    // 	    console.log('paused');
+    // 	    cancelAnimationFrame(w.raf);
+    // 	    w.raf = null;
+    // 	    w.paused = true;
+    // 	} else {
+    // 	    console.log('unpaused');
+    // 	    w.raf = requestAnimationFrame(redraw);
+    // 	}
+    // });
+    // w.addEventListener('dblclick', function(e) {
+    // 	if (w.paused) {
+    // 	    reverseTime(w);
+    // 	    w.raf = requestAnimationFrame(redraw);
+    // 	    console.log('reversed');
+    // 	}
+    // });

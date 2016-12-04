@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Simple Canvas Example</title>
+    <title>Balls</title>
     <style>
       canvas { border: 3px #CCC solid; }
     </style>
@@ -9,20 +9,17 @@
 
   <body>
     <div id="container">
-      <canvas id="canvas" height="600" width="800"></canvas>
+      <canvas id="world" height="600" width="800"></canvas>
     </div>
     <script src="balls.js"></script>
     <script>
 
-world = document.getElementById('canvas');
-init(world);
-radius = 10;
-for (var x = 300; x <= world.width-50; x += 25) {
-    for (var y = 100; y <= world.height-100; y += 25) {
-	world.addBall(radius,x,y,0,0);
+for (var x = 400; x <= world.width-100; x += 30) {
+    for (var y = 100; y <= world.height-100; y += 30) {
+	addBall(10,x,y,0,0);
     }
 }
-world.addBall(50,110,310,.3,0);
+addBall(50,110,310,.3,0);
 
     </script>
   </body>
