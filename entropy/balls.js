@@ -6,13 +6,10 @@ function init() {
     world.balls = [];
     world.addBall = addBall;
     world.paused = true;
-    world.lastEvent = 'init';
-    world.addEventListener('click',    function() {
-	world.lastEvent = 'click';
-	if (world.paused) requestAnimationFrame(redraw);
-    });
-    world.addEventListener('dblclick', function() {
-	world.lastEvent = 'dblclick';
+    world.arrowOfTime = 1;
+    world.lastClick = 0;
+    world.addEventListener('click', function(e) {
+	world.lastClick = getCursorPosition(world,e)[0] > world.width/2 ? 1 : -1;
 	if (world.paused) requestAnimationFrame(redraw);
     });
     requestAnimationFrame(redraw);
@@ -22,21 +19,24 @@ function redraw(time) {
     //console.log("redraw:"+time);
     if (world.paused) {
 	updateTime(world,time);
-    }
-    if (world.lastEvent === 'click') {
-	console.log('click');
-	world.paused = !world.paused;
-    }
-    if (world.lastEvent === 'dblclick') {
-	console.log('dblclick');
-	reverseTime(world);
-	world.paused = false;
-    }
-    world.lastEvent = 'redraw';
-    if (!world.paused) {
+	if (world.lastClick != 0) {
+	    if (world.lastClick * world.arrowOfTime < 0) {
+		world.arrowOfTime *= -1;
+		reverseTime(world);
+	    }
+	    world.lastClick = 0;
+	    world.paused = false;
+	    requestAnimationFrame(redraw);
+	}
+    } else {
 	updateBalls(world,time);
 	drawBalls(world);
-	requestAnimationFrame(redraw);
+	if (world.lastClick == 0) {
+	    requestAnimationFrame(redraw);
+	} else {
+	    world.lastClick = 0;
+	    world.paused = true;
+	}
     }
 }
 
@@ -206,23 +206,13 @@ function bounce(a,b) {
     b.vx += pma * nx; b.vy += pma * ny;
 }
 
+function getCursorPosition(canvas, event) {
+    var rect = canvas.getBoundingClientRect();
+    var x = event.clientX - rect.left;
+    var y = event.clientY - rect.top;
+    console.log("x: " + x + " y: " + y);
+    return [x,y];
+}
+
 init();    
 
-    // w.addEventListener('click', function(e) {
-    // 	if (w.raf) {
-    // 	    console.log('paused');
-    // 	    cancelAnimationFrame(w.raf);
-    // 	    w.raf = null;
-    // 	    w.paused = true;
-    // 	} else {
-    // 	    console.log('unpaused');
-    // 	    w.raf = requestAnimationFrame(redraw);
-    // 	}
-    // });
-    // w.addEventListener('dblclick', function(e) {
-    // 	if (w.paused) {
-    // 	    reverseTime(w);
-    // 	    w.raf = requestAnimationFrame(redraw);
-    // 	    console.log('reversed');
-    // 	}
-    // });
