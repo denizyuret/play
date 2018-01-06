@@ -4,23 +4,19 @@ const DIAMONDS=2
 const HEARTS=3
 const SPADES=4
 const NOTRUMP=5
+const SUITCHAR=['C','D','H','S','N']
 
 # Regular bids are represented by integers 1:35
 const TRUMPBIDS=35
 makebid(level,suit)=(5*(level-1)+suit)
 bidlevel(bid)=1+div(bid-1,5)
 bidsuit(bid)=mod1(bid,5)
+suitchar(bid)=SUITCHAR[bidsuit(bid)]
 
 # Three extra bids
 const PASS=36
 const DOUBLE=37
 const REDOUBLE=38
-
-# Players
-WEST=1
-NORTH=2
-EAST=3
-SOUTH=4
 
 
 # Bridge scoring: based on 
@@ -103,18 +99,47 @@ end
 
 # The input is the 20 results and vulnerability, the output is the par N/S score.
 
-function parscore(hands, vul, dealer)
+# Players
+WEST=1
+NORTH=2
+EAST=3
+SOUTH=4
+
+function parscore(results, vul, dealer)
     # par is the best n/s score so far and bid is the last bid so far.
     # ns should return a higher par and a higher bid if possible.
     function ns(par,bid)
-        for b = bid+1:BIDMAX
+        for b in bid+1:TRUMPBIDS
+            (level,suit) = bidlevel(b),bidsuit(b)
+            make = max(results[EAST,suit], results[WEST,suit])
+            double = make >= level+6 ? 1 : 2
+            pts = points(make, suit, level, double, vul)
+            if pts >= par; par,bid = pts,b; end
         end
+        return par,bid
     end
-    (par, bid, p, b) = (0, 0, -1, -1)
-    while (par,bid) != (p,b)
-        (p,b) = (par,bid)
-        (par,bid) = ns(par,bid)
-        (par,bid) = ew(par,bid)
+    # ew should return a lower par and a higher bid if possible.
+    function ew(par,bid)
+        for b in bid+1:TRUMPBIDS
+            (level,suit) = bidlevel(b),bidsuit(b)
+            make = max(13-results[NORTH,suit], 13-results[SOUTH,suit])
+            double = make >= level+6 ? 1 : 2
+            pts = -points(make, suit, level, double, vul)
+            if pts <= par; par,bid = pts,b; end
+        end
+        return par,bid
     end
-    return par
+    turn,par,bid,iter = dealer,0,0,0
+    while true
+        (par1,bid1) = (par,bid)
+        (par,bid) = (iseven(turn) ? ns(par,bid) : ew(par,bid))
+        iter += 1
+        # println((par,bidlevel(bid),suitchar(bid),(iseven(turn)?"NS":"EW")))
+        if turn > dealer && (par1,bid1) == (par,bid); break; end
+        turn += 1
+    end
+    return par,bidlevel(bid),suitchar(bid),(iseven(turn-1)?"NS":"EW"),iter
 end
+
+hex2int(c::Char)=(c <= '9' ? c - '0' : c - '7')
+

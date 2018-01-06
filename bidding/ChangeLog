@@ -1,4 +1,13 @@
-2018-01-06  dyuret  <dyuret@ku.edu.tr>
+2018-01-06  Deniz Yuret  <dyuret@ku.edu.tr>
+
+	* testparscore.jl: par-score statistics show 3/4 of hands end up
+	with positive score for declarer, 1/4 end up with doubled sacrifice.
+
+	N = 717102
+	NS = .4994
+	EW = .5006
+	NS>0 = .7687
+	EW<0 = .7682
 
 	* bidfreq.pl: compute bid frequencies based on pbn game records.
 	It may help to design system output to have the correct
