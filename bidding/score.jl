@@ -1,7 +1,7 @@
 # Bridge scoring: based on 
 
 """
-    bridgescore(hands, trump, contract, double, vulnerable)
+    points(hands, trump, contract, double, vulnerable)
 
 Returns score for the declarer given:
 
@@ -45,6 +45,7 @@ Based on https://www.bridgehands.com/I/IMP.htm.
 
 """
 function imps(points)
+    @assert points > 0
     const a = [20,50,90,130,170,220,270,320,370,430,500,600,750,900,1100,1300,1500,1750,2000,2250,2500,3000,3500,4000,10581]
     for i=1:length(a)
         if points < a[i]; return i-1; end
