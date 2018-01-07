@@ -1,24 +1,3 @@
-# Trump suits
-const CLUBS=1
-const DIAMONDS=2
-const HEARTS=3
-const SPADES=4
-const NOTRUMP=5
-const SUITCHAR=['C','D','H','S','N']
-
-# Regular bids are represented by integers 1:35
-const TRUMPBIDS=35
-makebid(level,suit)=(5*(level-1)+suit)
-bidlevel(bid)=1+div(bid-1,5)
-bidsuit(bid)=mod1(bid,5)
-suitchar(bid)=SUITCHAR[bidsuit(bid)]
-
-# Three extra bids
-const PASS=36
-const DOUBLE=37
-const REDOUBLE=38
-
-
 # Bridge scoring: based on 
 
 """
@@ -99,12 +78,6 @@ end
 
 # The input is the 20 results and vulnerability, the output is the par N/S score.
 
-# Players
-WEST=1
-NORTH=2
-EAST=3
-SOUTH=4
-
 function parscore(results, vul, dealer)
     # par is the best n/s score so far and bid is the last bid so far.
     # ns should return a higher par and a higher bid if possible.
@@ -140,6 +113,4 @@ function parscore(results, vul, dealer)
     end
     return par,bidlevel(bid),suitchar(bid),(iseven(turn-1)?"NS":"EW"),iter
 end
-
-hex2int(c::Char)=(c <= '9' ? c - '0' : c - '7')
 
