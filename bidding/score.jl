@@ -78,39 +78,52 @@ end
 
 # The input is the 20 results and vulnerability, the output is the par N/S score.
 
-function parscore(results, vul, dealer)
-    # par is the best n/s score so far and bid is the last bid so far.
-    # ns should return a higher par and a higher bid if possible.
-    function ns(par,bid)
-        for b in bid+1:TRUMPBIDS
-            (level,suit) = bidlevel(b),bidsuit(b)
-            make = max(results[EAST,suit], results[WEST,suit])
-            double = make >= level+6 ? 1 : 2
-            pts = points(make, suit, level, double, vul)
-            if pts >= par; par,bid = pts,b; end
-        end
-        return par,bid
-    end
-    # ew should return a lower par and a higher bid if possible.
-    function ew(par,bid)
-        for b in bid+1:TRUMPBIDS
-            (level,suit) = bidlevel(b),bidsuit(b)
-            make = max(13-results[NORTH,suit], 13-results[SOUTH,suit])
-            double = make >= level+6 ? 1 : 2
-            pts = -points(make, suit, level, double, vul)
-            if pts <= par; par,bid = pts,b; end
-        end
-        return par,bid
-    end
-    turn,par,bid,iter = dealer,0,0,0
+"""
+
+    parscore(results; dealer, nsvul, ewvul)
+
+Returns a tuple with the parscore and some other info.
+* results[leader,trump] is the number of tricks NS can take with double dummy
+* dealer=SOUTH: 1=west, 2=north, 3=east, 4=south
+* nsvul=false: true/false for NS vulnerability
+* ewvul=false: true/false for EW vulnerability
+
+References:
+* http://bridgecomposer.com/Par.htm
+
+"""
+function parscore(results; dealer=SOUTH, nsvul=false, ewvul=false)
+    par,bid,iter,decl = 0,0,0,mod1(dealer-1,4)
     while true
-        (par1,bid1) = (par,bid)
-        (par,bid) = (iseven(turn) ? ns(par,bid) : ew(par,bid))
         iter += 1
-        # println((par,bidlevel(bid),suitchar(bid),(iseven(turn)?"NS":"EW")))
-        if turn > dealer && (par1,bid1) == (par,bid); break; end
-        turn += 1
+        saved = par,bid,decl
+        @show saved
+        decl1,decl2 = mod1(decl+1,4),mod1(decl-1,4)
+        lead1,lead2 = mod1(decl+2,4),decl
+        for newbid in bid+1:TRUMPBIDS
+            level,trump = bidlevel(newbid),bidtrump(newbid)
+            if iseven(decl1)
+                make1,make2,vul = results[lead1,trump],results[lead2,trump],nsvul
+                newdecl,makes = (make1 >= make2 ? (decl1,make1) : (decl2,make2))
+                double = (makes >= level+6 ? 1 : 2)
+                newpar = points(makes, trump, level, double, vul)
+                if newpar >= par; par,bid,decl = newpar,newbid,newdecl; end
+            else
+                make1,make2,vul = 13-results[lead1,trump],13-results[lead2,trump],ewvul
+                newdecl,makes = (make1 >= make2 ? (decl1,make1) : (decl2,make2))
+                double = (makes >= level+6 ? 1 : 2)
+                newpar = -points(makes, trump, level, double, vul)
+                if newpar <= par; par,bid,decl = newpar,newbid,newdecl; end
+            end
+        end
+        if par == 0
+            decl = mod1(decl+1,4)
+        elseif (par,bid,decl) == saved
+            break
+        elseif iter > 10
+            error("Too many iterations")
+        end
     end
-    return par,bidlevel(bid),suitchar(bid),(iseven(turn-1)?"NS":"EW"),iter
+    return par,bid,decl,iter
 end
 

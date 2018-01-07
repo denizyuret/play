@@ -1,9 +1,8 @@
-using StaticArrays
-
 # Characters
 const SUITCHAR=collect("CDHSN")
 const CARDCHAR=collect("23456789TJQKA")
 const HEXCHAR=collect("0123456789ABCDEF")
+const PLAYERCHAR=collect("WNES")
 hex2int(c::Char)=(c <= '9' ? c - '0' : c - '7')
 int2hex(i::Integer)=HEXCHAR[i+1]
 
@@ -18,8 +17,8 @@ const NOTRUMP=5
 const TRUMPBIDS=35
 makebid(level,suit)=(5*(level-1)+suit)
 bidlevel(bid)=1+div(bid-1,5)
-bidsuit(bid)=mod1(bid,5)
-bidsuitchar(bid)=SUITCHAR[bidsuit(bid)]
+bidtrump(bid)=mod1(bid,5)
+bidtrumpchar(bid)=SUITCHAR[bidtrump(bid)]
 bidlevelchar(bid)='0'+bidlevel(bid)
 
 # Cards
@@ -42,7 +41,8 @@ const EAST=3
 const SOUTH=4
 
 # Double dummy data
-struct DoubleDummy2
-    hands::SVector{4,UInt64} # Using 52 bits of UInt64 to encode a hand
-    results::SMatrix{4,5,UInt8}  # (4,5) array of NS tricks
-end
+# using StaticArrays
+# struct DoubleDummy2
+#     hands::SVector{4,UInt64} # Using 52 bits of UInt64 to encode a hand
+#     results::SMatrix{4,5,UInt8}  # (4,5) array of NS tricks
+# end
