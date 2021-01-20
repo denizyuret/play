@@ -12,3 +12,16 @@ TODO
 * test bwn on cifar, mini-imagenets etc with resnet
 * figure out xnor
 * try tanh idea, regularization idea etc
+
+Models to add:
+* resnet
+* shufflenet and other efficient architectures
+* xnor-net
+* macnet
+* unet
+* yolo
+* mask rcnn
+* bert and friends
+* s2s rnn models
+* sha-rnn, shadi's rnn
+
