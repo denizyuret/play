@@ -14,6 +14,18 @@ TODO
 * figure out xnor
 * try tanh idea, regularization idea etc
 
+Models to add:
+* resnet
+* shufflenet and other efficient architectures
+* xnor-net
+* macnet
+* unet
+* yolo
+* mask rcnn
+* bert and friends
+* s2s rnn models
+* sha-rnn, shadi's rnn
+
 EfficientNet:
 https://arxiv.org/abs/1905.11946
 http://cs231n.stanford.edu/slides/2020/lecture_9.pdf
