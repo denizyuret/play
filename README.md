@@ -1,6 +1,7 @@
 # research
 
 TODO
+* Implement SAM: https://arxiv.org/abs/2010.01412
 * Implement RAM versions of basic image utils, bubble graph
 * Use tanh(alpha*x) for soft binarization
 * Use separate learnt masks for three-value -1,0,1 networks
